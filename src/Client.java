@@ -1,19 +1,20 @@
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.Socket;
 
 public class Client {
-    private static String LocallHost = "192.168.15.7";
     public static void main(String[] args) {
         try {
-            Socket clientSocket = new Socket(LocallHost, 4000);
-            System.out.println("Conectado com sucesso");
+            Socket socket = new Socket("localhost", 4000);
 
-            InputThread inputThread = new InputThread(clientSocket);
+            // thread para enviar comandos e apostas
+            InputThread inputThread = new InputThread(socket);
             inputThread.start();
 
-        }catch (Exception e){
-            System.out.println("Erro ao conectar");
+            // thread para receber mensagens do servidor
+            ClientReceiverThread receiverThread = new ClientReceiverThread(socket);
+            receiverThread.start();
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

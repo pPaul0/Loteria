@@ -1,34 +1,50 @@
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     private static final int PORTA = 4000;
     private static final int MAX_CLIENTES = 5;
-    private static int activeClients = 0;
+
+    private static ServerSocket serverSocket;
+    private static List<ClientThread> clientes = new ArrayList<>();
+    private static List<PrizeDrawThread> prizeThreads = new ArrayList<>();
 
     public static void main(String[] args) {
-        try (ServerSocket serverSocket = new ServerSocket(PORTA)) {
+        try {
+            serverSocket = new ServerSocket(PORTA);
             System.out.println("Servidor aguardando conexão...");
 
-            while (true) {
-                if (activeClients < MAX_CLIENTES) {
-                    Socket socket = serverSocket.accept();
-                    activeClients++;
+            while (clientes.size() < MAX_CLIENTES) {
+                Socket socket = serverSocket.accept();
 
-                    ClientThread clientThread = new ClientThread(socket);
-                    PrizeDrawThread prizeDrawThread = new PrizeDrawThread(clientThread);
-                    prizeDrawThread.start();
-                    clientThread.start();
-                }
+                ClientThread clientThread = new ClientThread(socket);
+                PrizeDrawThread prizeThread = new PrizeDrawThread(clientThread);
+
+                clientes.add(clientThread);
+                prizeThreads.add(prizeThread);
+
+                clientThread.start();
+                prizeThread.start();
             }
-        } catch (IOException e) {
+
+            // Aguardando todas as threads terminarem
+            for (ClientThread ct : clientes) ct.join();
+            for (PrizeDrawThread pt : prizeThreads) pt.join();
+
+            System.out.println("Todas as threads encerraram. Servidor finalizando.");
+            stopServer();
+
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    public static synchronized void clienteSaiu() {
-        activeClients--;
+    public static void stopServer() {
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) serverSocket.close();
+        } catch (IOException ignored) {}
     }
 }

@@ -13,12 +13,10 @@ public class ClientReceiverThread extends Thread {
     public void run() {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
             String linha;
             while ((linha = reader.readLine()) != null) {
-                System.out.println(linha); // imprime na tela
+                System.out.println(linha);
             }
-
         } catch (Exception e) {
             System.out.println("Conexão com o servidor encerrada.");
         }
